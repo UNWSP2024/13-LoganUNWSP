@@ -1,0 +1,103 @@
+# Logan H's Phonebook App
+
+import sqlite3
+import tkinter as tk
+from tkinter import messagebox
+
+# 1. Initialize database
+def init_db():
+    conn = sqlite3.connect("phonebook.db")
+    cursor = conn.cursor()
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS Entries (
+            Name TEXT PRIMARY KEY,
+            Phone TEXT
+        )
+    """)
+    conn.commit()
+    conn.close()
+
+# 2. Create Entry
+def add_entry():
+    name = entry_name.get()
+    phone = entry_phone.get()
+    if name and phone:
+        try:
+            conn = sqlite3.connect("phonebook.db")
+            cursor = conn.cursor()
+            cursor.execute("INSERT INTO Entries (Name, Phone) VALUES (?, ?)", (name, phone))
+            conn.commit()
+            conn.close()
+            messagebox.showinfo("Success", f"Added {name}")
+        except sqlite3.IntegrityError:
+            messagebox.showerror("Error", "Name already exists.")
+    else:
+        messagebox.showwarning("Missing Info", "Please enter both name and phone.")
+
+# 3. Read Entry
+def lookup_entry():
+    name = entry_name.get()
+    if name:
+        conn = sqlite3.connect("phonebook.db")
+        cursor = conn.cursor()
+        cursor.execute("SELECT Phone FROM Entries WHERE Name = ?", (name,))
+        result = cursor.fetchone()
+        conn.close()
+        if result:
+            entry_phone.delete(0, tk.END)
+            entry_phone.insert(0, result[0])
+        else:
+            messagebox.showinfo("Not Found", "No entry found.")
+
+# 4. Update Entry
+def update_entry():
+    name = entry_name.get()
+    phone = entry_phone.get()
+    if name and phone:
+        conn = sqlite3.connect("phonebook.db")
+        cursor = conn.cursor()
+        cursor.execute("UPDATE Entries SET Phone = ? WHERE Name = ?", (phone, name))
+        if cursor.rowcount == 0:
+            messagebox.showinfo("Not Found", "No entry found to update.")
+        else:
+            messagebox.showinfo("Success", f"Updated {name}")
+        conn.commit()
+        conn.close()
+
+# 5. Delete Entry
+def delete_entry():
+    name = entry_name.get()
+    if name:
+        conn = sqlite3.connect("phonebook.db")
+        cursor = conn.cursor()
+        cursor.execute("DELETE FROM Entries WHERE Name = ?", (name,))
+        if cursor.rowcount == 0:
+            messagebox.showinfo("Not Found", "No entry found to delete.")
+        else:
+            messagebox.showinfo("Deleted", f"{name} removed.")
+        conn.commit()
+        conn.close()
+
+# 6. GUI Setup
+window = tk.Tk()
+window.title("Phonebook CRUD App")
+
+# Name Entry
+tk.Label(window, text="Name:").pack()
+entry_name = tk.Entry(window)
+entry_name.pack()
+
+# Phone Entry
+tk.Label(window, text="Phone Number:").pack()
+entry_phone = tk.Entry(window)
+entry_phone.pack()
+
+# Buttons
+tk.Button(window, text="Add", width=20, command=add_entry).pack(pady=2)
+tk.Button(window, text="Lookup", width=20, command=lookup_entry).pack(pady=2)
+tk.Button(window, text="Update", width=20, command=update_entry).pack(pady=2)
+tk.Button(window, text="Delete", width=20, command=delete_entry).pack(pady=2)
+
+# Initialize database and run GUI
+init_db()
+window.mainloop()

@@ -1,0 +1,49 @@
+# Logan H's Cities Database Viewer
+
+# 1st, IMPORT tkinter and sqlite3
+import tkinter as tk
+from tkinter import scrolledtext
+import sqlite3
+
+# 2nd, DEFINE function to load and display cities
+def display_cities():
+    try:
+        # Connect to the database
+        conn = sqlite3.connect("cities.db")
+        cursor = conn.cursor()
+
+        # Execute query
+        cursor.execute("SELECT * FROM Cities")
+        rows = cursor.fetchall()
+
+        # Clear previous text
+        text_output.delete("1.0", tk.END)
+
+        # Add header
+        text_output.insert(tk.END, f"{'CityID':<6} {'CityName':<20} {'Population':>15}\n")
+        text_output.insert(tk.END, "-" * 45 + "\n")
+
+        # Display rows
+        for city_id, name, population in rows:
+            text_output.insert(tk.END, f"{city_id:<6} {name:<20} {population:>15,.0f}\n")
+
+        # Close connection
+        conn.close()
+    except Exception as e:
+        text_output.delete("1.0", tk.END)
+        text_output.insert(tk.END, f"Error: {e}")
+
+# 3rd, SET UP main window
+window = tk.Tk()
+window.title("Cities Database Viewer")
+
+# 4th, CREATE button to load cities
+btn_load = tk.Button(window, text="Load Cities", command=display_cities)
+btn_load.pack(pady=10)
+
+# 5th, CREATE scrollable text area for output
+text_output = scrolledtext.ScrolledText(window, width=50, height=15)
+text_output.pack()
+
+# 6th, START the main loop
+window.mainloop()
